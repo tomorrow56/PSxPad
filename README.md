@@ -1,6 +1,7 @@
 # Arduino Simple PlayStation 1 Pad Controller Decoder Library
 
-## Based on PSX Library
+Based on PSX Library
+
 http://playground.arduino.cc/Main/PSXLibrary
 
 Written by: Kevin Ahrendt June 22nd, 2008
