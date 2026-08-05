@@ -1,21 +1,10 @@
-/*  PSX Controller Decoder Library (PsxPad.h)
-	Based on PSX Library
-		http://playground.arduino.cc/Main/PSXLibrary)
-		Written by: Kevin Ahrendt June 22nd, 2008
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/*
+ * PSxPad + ESP-NOW example
+ * Reads a PSX controller via PsxPad library and sends button events
+ * to a peer device over ESP-NOW.
+ *
+ * Registered by tomorrow56 in 2026
+ */
 
 #include <M5Unified.h>
 #include <FastLED.h>
@@ -70,6 +59,11 @@ CRGB leds[NUM_LEDS];
  G23    5V
  G33    GND
 *********************/
+// For M5Atom
+// #define dataPin  22  // brown, pull-up
+// #define cmndPin  19  // orange
+// #define attPin   23  // yellow
+// #define clockPin 33  // blue
 
 // For M5AtomS3
 #define dataPin  5  // brown, pull-up
@@ -93,7 +87,12 @@ esp_err_t result;
 boolean sending = false;
 
 // 送信コールバック
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3)
+void OnDataSent(const esp_now_send_info_t *info, esp_now_send_status_t status) {
+  const uint8_t *mac_addr = info->des_addr;
+#else
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+#endif
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
@@ -104,7 +103,12 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 }
 
 // 受信コールバック
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && (ESP_ARDUINO_VERSION_MAJOR >= 3)
+void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *data, int data_len) {
+  const uint8_t *mac_addr = info->src_addr;
+#else
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
+#endif
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
@@ -118,29 +122,25 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
   // LEDを光らせる
   leds[0] = CRGB::Red;
   FastLED.show();
-  delay(10);
   delay(100);
   leds[0] = CRGB::Blue;
   FastLED.show();
-  delay(10);
 }
 
 void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
-  Serial.begin(115200);
-//  while (!Serial);
 
   PsxPad.begin();
 
   FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(20);
 
-    // LEDを青にする
+  // LEDを青にする
   leds[0] = CRGB::Blue;
   FastLED.show();
-  delay(10);
-  
+  delay(100);
+
   Serial.println("PSxPad + ESP-NOW");
 
   // ESP-NOW初期化
@@ -155,13 +155,16 @@ void setup() {
 
   // Slave登録
   memset(&slave, 0, sizeof(slave));
-  //PSx Mac Address: 50:02:91:8e:e2:34
-  slave.peer_addr[0] = (uint8_t)0x50;
+  // Slave Mac Address: 01:02:03:04:05:06 (暫定値。接続先のMacアドレスに書き換えてください)
+  // FF:FF:FF:FF:FF:FF にするとブロードキャストになる
+  // Slave Mac Address: 01:02:03:04:05:06 (placeholder value; replace with the peer's actual MAC address)
+  // Setting it to FF:FF:FF:FF:FF:FF makes it a broadcast
+  slave.peer_addr[0] = (uint8_t)0x01;
   slave.peer_addr[1] = (uint8_t)0x02;
-  slave.peer_addr[2] = (uint8_t)0x91;
-  slave.peer_addr[3] = (uint8_t)0x8E;
-  slave.peer_addr[4] = (uint8_t)0xE2;
-  slave.peer_addr[5] = (uint8_t)0x34;
+  slave.peer_addr[2] = (uint8_t)0x03;
+  slave.peer_addr[3] = (uint8_t)0x04;
+  slave.peer_addr[4] = (uint8_t)0x05;
+  slave.peer_addr[5] = (uint8_t)0x06;
 
   esp_err_t addStatus = esp_now_add_peer(&slave);
   if (addStatus == ESP_OK) {
@@ -175,23 +178,18 @@ void setup() {
 }
 
 void loop() {
-//  M5.update();
+  M5.update();
   // Psx.read() initiates the PSX controller and returns the button data
   state = PsxPad.read();
 
   uint8_t data[1] = {0};
-//  Serial.printf("key State: 0x%x\r\n", state);
 
   if(state == 0){
     // LED CYAN
     leds[0] = CRGB::Cyan;
     FastLED.show();
-    delay(10);
     if(sending){
       data[0] = 0;
-      result = esp_now_send(slave.peer_addr, data, sizeof(data));
-      Serial.println("STOP");
-      delay(100);
       result = esp_now_send(slave.peer_addr, data, sizeof(data));
       Serial.println("STOP");
       sending = false;
@@ -200,7 +198,6 @@ void loop() {
     // LED RED
     leds[0] = CRGB::Red;
     FastLED.show();
-    delay(10);
     sending = true;
     if(state & psxSqu){
       data[0] = 1;

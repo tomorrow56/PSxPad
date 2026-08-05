@@ -53,6 +53,11 @@
  G23    5V
  G33    GND
 *********************/
+// For M5Atom
+// #define dataPin  22  // brown, pull-up
+// #define cmndPin  19  // orange
+// #define attPin   23  // yellow
+// #define clockPin 33  // blue
 
 // For M5AtomS3
 #define dataPin  5  // brown, pull-up
