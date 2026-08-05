@@ -6,8 +6,6 @@ http://playground.arduino.cc/Main/PSXLibrary
 
 作者: Kevin Ahrendt 2008年6月22日
 
-Registered by tomorrow56 in 2026
-
 本プログラムはフリーソフトウェアです。フリーソフトウェア財団が発行する GNU General Public License（バージョン3、またはそれ以降のいずれかのバージョン）の条件の下で、再頒布や改変を行うことができます。
 
 本プログラムは有用であることを願って頒布されていますが、*全くの無保証*です。商品性や特定目的への適合性についての黙示の保証さえありません。詳しくは GNU General Public License をご覧ください。
