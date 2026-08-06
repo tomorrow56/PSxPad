@@ -46,6 +46,12 @@ ESP32系ボード（M5Stack ATOM / ATOMS3 で動作確認済み）を対象と�
 |G7|ATT|
 |G8|CLK|
 
+## 通信波形
+
+PSx コントローラーとの通信波形は以下の通りです。
+
+![通信波形](img/protocol.png)
+
 ## API
 
 ### コンストラクタ

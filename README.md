@@ -49,6 +49,12 @@ single `uint16_t` bitmask.
 |G7|ATT|
 |G8|CLK|
 
+## Communication Waveform
+
+The communication waveform with the PSx controller is shown below.
+
+![Communication waveform](img/protocol.png)
+
 ## API
 
 ### Constructor
