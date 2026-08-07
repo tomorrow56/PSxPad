@@ -55,6 +55,42 @@ The communication waveform with the PSx controller is shown below.
 
 ![Communication waveform](img/protocol.png)
 
+### Communication Sequence
+
+Communication is performed one byte at a time.
+The host sends data on CMD while simultaneously receiving data on
+DATA. The controller returns the result of processing the previous
+command to the host.
+
+For example, reading the button state involves the following
+communication sequence:
+
+| CMD  |  CMD content        | DATA |   DATA content    |
+|------|----------------------|------|--------------------|
+| 0x01 | ID request           | 0xFF | Dummy              |
+| 0x42 | Button info request  | 0x** | ID                 |
+| 0xFF | Clock only           | 0x5A | ACK                |
+| 0xFF | Clock only           | 0x** | Button Low         |
+| 0xFF | Clock only           | 0x** | Button High        |
+
+### Button Data
+
+The retrieved button information is assigned to each bit in the
+following order (LSB first). A bit is `1` when the button is
+released, and `0` when the button is pressed.
+
+[Button Low]
+
+| bit |   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
+|-----|-------|-------|-------|-------|-------|-------|-------|-------|
+| Btn |  SEL  |   -   |   -   | START |  UP   | RIGHT | DOWN  | LEFT  |
+
+[Button High]
+
+| bit |   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
+|-----|-------|-------|-------|-------|-------|-------|-------|-------|
+| Btn |  L2   |  R2   |  L1   |  R1   | Tri.  | Cir.  | Cross | Squ.  |
+
 ## API
 
 ### Constructor
